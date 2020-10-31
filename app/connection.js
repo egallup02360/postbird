@@ -112,18 +112,19 @@ class Connection {
 
   // Use ConnectionString lib to support parsing unix socket in connection string
   static parseConnectionString(postgresUrl /*: string */) /*: ConnectionOptions */ {
-    var cs = new ConnectionString(postgresUrl);
-    if (!cs.params) cs.params = {};
-    if (!cs.params.application_name) cs.params.application_name = 'Postbird.app';
-
+    var cs = new ConnectionString(postgresUrl, {
+      params: {
+        application_name: 'Postbird.app'
+      }
+    });
     var res = Object.assign({}, cs.params, {
       host: cs.hostname,
-      port: cs.port || cs.params && cs.params && cs.params.socketPort || '5432',
+      port: cs.port || cs.params.socketPort || 5432,
       database: cs.path && cs.path[0],
       user: cs.user,
       password: cs.password,
     });
-    if (cs.params && 'ssl' in cs.params) {
+    if ('ssl' in cs.params) {
       res.ssl = Boolean(cs.params.ssl)
     }
     delete res.socketPort;
@@ -243,6 +244,7 @@ class Connection {
   _initConnection(connectString) /*: pg.ClientExt */ {
     // @ts-ignore
     var clientConfig = Connection.parseConnectionString(connectString) /*:: as pg.ClientConfig */;
+    // clientConfig.connectionTimeoutMillis = 10000; // 10 sec
     return new pg.Client(clientConfig) /*:: as pg.ClientExt */;
   }
 

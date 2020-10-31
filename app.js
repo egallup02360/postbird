@@ -44,7 +44,7 @@ interface App {
   addConnectionTab: () => any;
   addDbScreen: (connection: Connection, connectionName: any, options: any) => void;
   addHelpScreen: () => void;
-  helpScreenOpen: () => void;
+  helpScreenOpen: () => boolean;
   renderView: (viewName: string, options?: any) => JQuery<HTMLElement>;
   setSizes: () => void;
   startLoading: (message: string, timeout?: number, options?: any) => void;
@@ -76,11 +76,11 @@ interface App {
 */
 
 global.App = {
-  root: process.mainModule.filename.replace(/\/index.html/, ''),
+  root: remote.app.getAppPath(),
   // used for running binaries inside asar package
-  vendorPath: process.mainModule.filename.includes('app.asar') ?
-    path.join(process.mainModule.filename, `../../../vendor/${process.platform}`) :
-    path.join(process.mainModule.filename.replace('node_modules/electron-mocha/lib/main.js', 'index.html'), `../vendor/${process.platform}`),
+  vendorPath: remote.app.MainFilename.includes('app.asar') ?
+    path.join(remote.app.MainFilename, `../../../vendor/${process.platform}`) :
+    path.join(remote.app.MainFilename.replace('node_modules/electron-mocha/lib/main.js', 'index.html'), `../vendor/${process.platform}`),
 
   activeTab: null,
   tabs: [], // {name, content, is_active}
@@ -306,7 +306,19 @@ global.App = {
   },
 
   openConnection: function (options, connectionName, callback) {
-    this.startLoading("Connecting...");
+    var showConnectionError = true;
+    var runCallback = true;
+
+    this.startLoading("Connecting...", 500, {
+      cancel() {
+        App.stopRunningQuery();
+        App.stopLoading();
+        showConnectionError = false
+        if (callback) callback(false);
+        runCallback = false
+      }
+    });
+    //this.startLoading("Connecting...");
 
     if (typeof options == 'string') {
       options = Connection.parseConnectionString(options);
@@ -321,13 +333,17 @@ global.App = {
       if (status) {
         var tab = this.addDbScreen(conn, connectionName, options);
         tab.activate();
-        if (callback) callback(tab);
+        if (callback && runCallback) callback(tab);
       } else {
-        $u.alertError("Connection error", {
-          detail: this.humanErrorMessage(error)
-        });
+        if (showConnectionError) {
+          $u.alertError("Connection error", {
+            detail: this.humanErrorMessage(error)
+          });
+        } else {
+          console.error(error)
+        }
         //window.alertify.alert(this.humanErrorMessage(message));
-        if (callback) callback(false);
+        if (callback && runCallback) callback(false);
       }
     });
   },

@@ -67,7 +67,7 @@ declare module NodeJS {
     TESTING: any;
     errorReporter: (exception: Error, showError?: boolean) => void;
     PgTypeNames: PgTypeNames;
-    electron: Electron.RendererInterface;
+    electron: number; // Electron.RendererInterface;
     HistoryWindow: HistoryWindow;
     ChildProcessExt: ChildProcessExt;
     UpdatesController: typeof UpdatesController;
@@ -91,7 +91,7 @@ declare class Window_Hljs {
 
 interface Window {
   alertify: alertify.IAlertifyStatic
-  Mousetrap: MousetrapStatic
+  Mousetrap: Mousetrap.MousetrapStatic
   hljs: Window_Hljs
   CodeMirror: Window_CodeMirror
   SidebarResize: typeof SidebarResize;
@@ -110,11 +110,12 @@ interface Window_CodeMirror {
 declare namespace Electron {
   interface App {
     ApplicationStart: number;
+    MainFilename: string;
     mainWindow: BrowserWindow;
   }
 
   interface Menu {
-    clickEvent: PointerEvent
+    clickEvent: MouseEvent
   }
 }
 
@@ -132,8 +133,12 @@ interface DOMinateResult {
   [column: string] : HTMLElement
 }
 
+interface GlobalEventHandlers {
+  className: string
+}
+
 declare var logger: Logger;
-declare var electron: Electron.RendererInterface;
+//declare var electron: Electron.IpcRenderer;
 declare var DOMinate: (elements: any[]) => DOMinateResult;
 declare var $dom: (elements: any[]) => HTMLElement;
 declare var App: App;
